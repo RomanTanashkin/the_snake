@@ -183,7 +183,6 @@ def main():
         if snake.get_head_position() == apple.position:
             snake.length += 1
             apple.randomize_position()
-            
             # Исправлено: проверка, чтобы яблоко не появилось внутри змейки
             while apple.position in snake.positions:
                 apple.randomize_position()
