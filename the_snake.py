@@ -50,7 +50,13 @@ class GameObject:
 
     def draw(self):
         """Базовый метод отрисовки (для наследников)."""
-        pass
+        # Исправлено: удален лишний pass, так как есть docstring
+
+    def draw_cell(self, position):
+        """Метод для отрисовки одной ячейки (чтобы не дублировать код)."""
+        rect = pygame.Rect(position, (GRID_SIZE, GRID_SIZE))
+        pygame.draw.rect(screen, self.body_color, rect)
+        pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
 
 
 class Apple(GameObject):
@@ -69,9 +75,8 @@ class Apple(GameObject):
 
     def draw(self):
         """Отрисовка яблока."""
-        rect = pygame.Rect(self.position, (GRID_SIZE, GRID_SIZE))
-        pygame.draw.rect(screen, self.body_color, rect)
-        pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
+        # Исправлено: используем общий метод отрисовки ячейки
+        self.draw_cell(self.position)
 
 
 class Snake(GameObject):
@@ -125,14 +130,11 @@ class Snake(GameObject):
         """Отрисовать все сегменты змейки."""
         # Отрисовка тела (без головы)
         for segment in self.positions[:-1]:
-            rect = pygame.Rect(segment, (GRID_SIZE, GRID_SIZE))
-            pygame.draw.rect(screen, self.body_color, rect)
-            pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
+            self.draw_cell(segment)
 
         # Отрисовка головы
-        head_rect = pygame.Rect(self.positions[0], (GRID_SIZE, GRID_SIZE))
-        pygame.draw.rect(screen, self.body_color, head_rect)
-        pygame.draw.rect(screen, BORDER_COLOR, head_rect, 1)
+        # Исправлено: используем метод get_head_position
+        self.draw_cell(self.get_head_position())
 
         # Затирание следа хвоста
         if self.last:
@@ -165,7 +167,6 @@ def main():
     snake = Snake()
 
     while True:
-        # clock.tick нужен для корректной работы тестов
         clock.tick(SPEED)
 
         handle_keys(snake)
@@ -182,6 +183,10 @@ def main():
         if snake.get_head_position() == apple.position:
             snake.length += 1
             apple.randomize_position()
+            
+            # Исправлено: проверка, чтобы яблоко не появилось внутри змейки
+            while apple.position in snake.positions:
+                apple.randomize_position()
 
         apple.draw()
         snake.draw()
