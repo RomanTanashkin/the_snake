@@ -2,45 +2,45 @@ from random import choice, randint
 
 import pygame
 
-# Константы для размеров поля и сетки:
+# Constants for field and grid size:
 SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
 GRID_SIZE = 20
 GRID_WIDTH = SCREEN_WIDTH // GRID_SIZE
 GRID_HEIGHT = SCREEN_HEIGHT // GRID_SIZE
 
-# Направления движения:
+# Movement directions:
 UP = (0, -1)
 DOWN = (0, 1)
 LEFT = (-1, 0)
 RIGHT = (1, 0)
 
-# Цвет фона - черный:
+# Background colour - black:
 BOARD_BACKGROUND_COLOR = (0, 0, 0)
 
-# Цвет границы ячейки
+# Cell border colour
 BORDER_COLOR = (93, 216, 228)
 
-# Цвет яблока
+# Apple colour
 APPLE_COLOR = (255, 0, 0)
 
-# Цвет змейки
+# Snake colour
 SNAKE_COLOR = (0, 255, 0)
 
-# Скорость движения змейки:
+# Snake speed:
 SPEED = 20
 
-# Настройка игрового окна:
+# Game window setup:
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), 0, 32)
 
-# Заголовок окна игрового поля:
+# Game window title:
 pygame.display.set_caption('Змейка')
 
-# Настройка времени:
+# Clock setup:
 clock = pygame.time.Clock()
 
 
 class GameObject:
-    """Базовый класс для игровых объектов."""
+    """Base class for game objects."""
 
     def __init__(self, position=None, body_color=None):
         if position is None:
@@ -49,45 +49,43 @@ class GameObject:
         self.body_color = body_color
 
     def draw(self):
-        """Базовый метод отрисовки (для наследников)."""
-        # Исправлено: удален лишний pass, так как есть docstring
+        """Base draw method (to be overridden by subclasses)."""
 
     def draw_cell(self, position):
-        """Метод для отрисовки одной ячейки (чтобы не дублировать код)."""
+        """Draw a single cell (shared by all game objects)."""
         rect = pygame.Rect(position, (GRID_SIZE, GRID_SIZE))
         pygame.draw.rect(screen, self.body_color, rect)
         pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
 
 
 class Apple(GameObject):
-    """Игровое яблоко."""
+    """Game apple."""
 
     def __init__(self, body_color=APPLE_COLOR):
         super().__init__(body_color=body_color)
         self.randomize_position()
 
     def randomize_position(self):
-        """Случайно разместить яблоко на поле по сетке."""
+        """Place the apple at a random grid position."""
         self.position = (
             randint(0, GRID_WIDTH - 1) * GRID_SIZE,
             randint(0, GRID_HEIGHT - 1) * GRID_SIZE,
         )
 
     def draw(self):
-        """Отрисовка яблока."""
-        # Исправлено: используем общий метод отрисовки ячейки
+        """Draw the apple."""
         self.draw_cell(self.position)
 
 
 class Snake(GameObject):
-    """Игровая змейка."""
+    """Game snake."""
 
     def __init__(self, body_color=SNAKE_COLOR):
         super().__init__(body_color=body_color)
         self.reset()
 
     def reset(self):
-        """Вернуть змейку в начальное состояние."""
+        """Reset the snake to its initial state."""
         start_pos = (SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2)
         self.position = start_pos
         self.length = 1
@@ -97,21 +95,21 @@ class Snake(GameObject):
         self.last = None
 
     def get_head_position(self):
-        """Получить координаты головы змейки."""
+        """Return the coordinates of the snake head."""
         return self.positions[0]
 
     def update_direction(self):
-        """Применить направление, выбранное пользователем."""
+        """Apply the direction chosen by the user."""
         if self.next_direction:
             self.direction = self.next_direction
             self.next_direction = None
 
     def move(self):
-        """Сдвинуть змейку на одну клетку вперёд."""
+        """Move the snake one cell forward."""
         head_x, head_y = self.get_head_position()
         dx, dy = self.direction
 
-        # Вычисляем новую позицию с учетом заворачивания за край экрана
+        # Compute the new position, wrapping around the screen edges
         new_head = (
             (head_x + dx * GRID_SIZE) % SCREEN_WIDTH,
             (head_y + dy * GRID_SIZE) % SCREEN_HEIGHT,
@@ -120,30 +118,29 @@ class Snake(GameObject):
         self.positions.insert(0, new_head)
         self.position = new_head
 
-        # Если длина не увеличилась, удаляем хвост
+        # If the length has not grown, remove the tail
         if len(self.positions) > self.length:
             self.last = self.positions.pop()
         else:
             self.last = None
 
     def draw(self):
-        """Отрисовать все сегменты змейки."""
-        # Отрисовка тела (без головы)
+        """Draw all snake segments."""
+        # Draw the body (without the head)
         for segment in self.positions[:-1]:
             self.draw_cell(segment)
 
-        # Отрисовка головы
-        # Исправлено: используем метод get_head_position
+        # Draw the head
         self.draw_cell(self.get_head_position())
 
-        # Затирание следа хвоста
+        # Erase the tail trace
         if self.last:
             last_rect = pygame.Rect(self.last, (GRID_SIZE, GRID_SIZE))
             pygame.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
 
 
 def handle_keys(game_object):
-    """Обработка нажатий клавиш пользователем."""
+    """Handle user key presses."""
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -160,7 +157,7 @@ def handle_keys(game_object):
 
 
 def main():
-    """Точка входа в игру."""
+    """Game entry point."""
     pygame.init()
 
     apple = Apple()
@@ -173,17 +170,17 @@ def main():
         snake.update_direction()
         snake.move()
 
-        # Проверка на столкновение с собой
+        # Check for collision with itself
         if snake.get_head_position() in snake.positions[2:]:
             snake.reset()
             screen.fill(BOARD_BACKGROUND_COLOR)
             apple.randomize_position()
 
-        # Проверка на поедание яблока
+        # Check whether the apple is eaten
         if snake.get_head_position() == apple.position:
             snake.length += 1
             apple.randomize_position()
-            # Исправлено: проверка, чтобы яблоко не появилось внутри змейки
+            # Make sure the apple does not appear inside the snake
             while apple.position in snake.positions:
                 apple.randomize_position()
 
